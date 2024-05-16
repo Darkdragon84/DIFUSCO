@@ -9,12 +9,14 @@ these optima, which are included in the files storing the graphs themselves.
 
 import argparse
 import pathlib
-import pandas as pd
-import networkx as nx
-import dgl
-import torch
 import random as rd
+
+import dgl
+import networkx as nx
+import pandas as pd
+import torch
 from tqdm.auto import tqdm
+
 
 def main(args):
     rows = []
@@ -24,7 +26,7 @@ def main(args):
         _G = nx.read_gpickle(graph_file)
         labels_given = "label" in rd.sample(_G.nodes(data=True), 1)[0][1].keys()
         weights_given = "weight" in rd.sample(_G.nodes(data=True), 1)[0][1].keys()
-        
+
         node_attrs = []
         if labels_given:
             node_attrs += ["label"]
@@ -44,16 +46,20 @@ def main(args):
                 optimal_mwis = torch.sum(G.ndata['weight'][_lbls == 1]).item()
 
         weighted = "-rgw" in str(graph_file)
-        rows.append((graph_name + "_weighted" if weighted else graph_name, optimal_mis, optimal_mwis))
+        rows.append(
+            (graph_name + "_weighted" if weighted else graph_name, optimal_mis, optimal_mwis))
 
     df = pd.DataFrame(rows, columns=["graph", "optimal_mis", "optimal_mwis"])
     df.to_csv(args.aggregation_output, index=False)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Parser for MIS test graph pseudo-optima.")
 
-    parser.add_argument("experiment_input_folder", type=pathlib.Path, action="store",  help="Folder in which the experiment input is given.")
-    parser.add_argument("aggregation_output", type=pathlib.Path, action="store",  help="File into which to write the aggregated results as CSV.")
+    parser.add_argument("experiment_input_folder", type=pathlib.Path, action="store",
+                        help="Folder in which the experiment input is given.")
+    parser.add_argument("aggregation_output", type=pathlib.Path, action="store",
+                        help="File into which to write the aggregated results as CSV.")
 
     args = parser.parse_args()
     args.aggregation_output.parent.mkdir(parents=True, exist_ok=True)

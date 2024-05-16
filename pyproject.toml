@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.distutils.bdist_wheel]
+python-tag = "py37"
+
+[project]
+version = "0.0.1"
+name = "difusco"
+
+readme = "README.md"
+requires-python = "==3.7.*"
+classifiers = [
+    "Programming Language :: Python :: 3 :: 7",
+]
+dependencies = [
+
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black[d]"
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py37"]

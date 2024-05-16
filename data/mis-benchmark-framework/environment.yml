@@ -19,4 +19,4 @@ dependencies:
   - osmnx
   - pip
   - pip:
-    - python-sat
+      - python-sat

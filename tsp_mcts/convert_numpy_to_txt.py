@@ -1,15 +1,16 @@
 import os
+
 import fire
 import numpy as np
 
 
 def main(
-    heatmap_dir,
-    output_dir,
-    num_nodes=10000,
-    num_files=16,
-    expected_valid_prob=0.02,
-    heatmap_prefix="heatmap",
+        heatmap_dir,
+        output_dir,
+        num_nodes=10000,
+        num_files=16,
+        expected_valid_prob=0.02,
+        heatmap_prefix="heatmap",
 ):
     for i in range(num_files):
         file_name = f"{heatmap_dir}/numpy_heatmap/test-{heatmap_prefix}-{i}.npy"

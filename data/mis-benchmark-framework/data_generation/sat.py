@@ -1,10 +1,11 @@
-from data_generation.generator import DataGenerator
+import pickle
 from pathlib import Path
 
-from pysat.formula import CNF
 import networkx as nx
 import numpy as np
-import pickle
+from data_generation.generator import DataGenerator
+from pysat.formula import CNF
+
 
 class SATGraphDataGenerator(DataGenerator):
 
@@ -16,7 +17,7 @@ class SATGraphDataGenerator(DataGenerator):
         cnf = CNF(cnf_file)
         nv = cnf.nv
         clauses = list(filter(lambda x: x, cnf.clauses))
-        ind = { k:[] for k in np.concatenate([np.arange(1, nv+1), -np.arange(1, nv+1)]) }
+        ind = {k: [] for k in np.concatenate([np.arange(1, nv + 1), -np.arange(1, nv + 1)])}
         edges = []
         for i, clause in enumerate(clauses):
             a = clause[0]
@@ -32,7 +33,7 @@ class SATGraphDataGenerator(DataGenerator):
             edges.append((aa, cc))
             edges.append((bb, cc))
 
-        for i in np.arange(1, nv+1):
+        for i in np.arange(1, nv + 1):
             for u in ind[i]:
                 for v in ind[-i]:
                     edges.append((u, v))
@@ -41,19 +42,20 @@ class SATGraphDataGenerator(DataGenerator):
 
         if gen_labels:
             mis = self._call_gurobi_solver(G, use_multiprocessing=True)[0]
-            label_mapping = { vertex: int(vertex in mis) for vertex in G.nodes }
+            label_mapping = {vertex: int(vertex in mis) for vertex in G.nodes}
             # print("label_mapping", label_mapping)
             nx.set_node_attributes(G, values=label_mapping, name='label')
 
         if weighted:
-            weight_mapping = {vertex: weight for vertex, weight in zip(G.nodes, self.random_weight(G.number_of_nodes()))}
+            weight_mapping = {vertex: weight for vertex, weight in
+                              zip(G.nodes, self.random_weight(G.number_of_nodes()))}
             nx.set_node_attributes(G, values=weight_mapping, name='weight')
 
         # write graph object to output file
         with open(output_file, "wb") as f:
             pickle.dump(G, f, pickle.HIGHEST_PROTOCOL)
 
-    def generate(self, gen_labels=False,  weighted=False):
+    def generate(self, gen_labels=False, weighted=False):
         # for f in self.input_path.rglob("*.cnf"):
         #     self._build_graph(f, self.output_path / (f.stem + ".gpickle"), gen_labels, weighted)
         import functools

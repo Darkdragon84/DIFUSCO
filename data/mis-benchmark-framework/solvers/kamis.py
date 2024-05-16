@@ -1,17 +1,16 @@
-import subprocess
+import json
 import os.path
 import pathlib
-
-import json
-import numpy as np
-import networkx as nx
-import dgl
-import time
 import re
+import subprocess
+import time
 
+import networkx as nx
+import numpy as np
 from logzero import logger
-from utils import run_command_with_live_output
 from solvers.abstractsolver import MWISSolver
+from utils import run_command_with_live_output
+
 
 class KaMIS(MWISSolver):
     def __init__(self) -> None:
@@ -21,7 +20,7 @@ class KaMIS(MWISSolver):
             kamis_repo = "https://github.com/KarlsruheMIS/KaMIS"
             target_commit = "791334ef6aebb2ccf005316258c043cca58923a0"
             subprocess.run(["git", "clone", kamis_repo], cwd=self.directory())
-            subprocess.run(["git","checkout",target_commit], cwd=kamis_path)
+            subprocess.run(["git", "checkout", target_commit], cwd=kamis_path)
             subprocess.run(["bash", "compile_withcmake.sh"], cwd=kamis_path)
 
     def load_weights(self, model_state_path):
@@ -34,7 +33,7 @@ class KaMIS(MWISSolver):
         return pathlib.Path(__file__).parent / "kamis"
 
     @staticmethod
-    def __prepare_graph(g: nx.Graph(), weighted = False):
+    def __prepare_graph(g: nx.Graph(), weighted=False):
         g.remove_edges_from(nx.selfloop_edges(g))
         n = g.number_of_nodes()
         m = g.number_of_edges()
@@ -44,8 +43,8 @@ class KaMIS(MWISSolver):
 
         for n, nbrsdict in g.adjacency():
             line = []
-            
-            #if weighted: line.append(g.node[n]["weight"]
+
+            # if weighted: line.append(g.node[n]["weight"]
             if weighted:
                 line.append(g.nodes(data="weight", default=1)[n])
 
@@ -54,24 +53,25 @@ class KaMIS(MWISSolver):
             res += " ".join(map(str, line)) + "\n"
         return res
 
-
-    def _prepare_instance(source_instance_file: pathlib.Path, cache_directory: pathlib.Path, weighted=False):
+    def _prepare_instance(source_instance_file: pathlib.Path, cache_directory: pathlib.Path,
+                          weighted=False):
         cache_directory.mkdir(parents=True, exist_ok=True)
 
-        dest_path = cache_directory / (source_instance_file.stem + f"_{'weighted' if weighted else 'unweighted'}.graph")
-        
+        dest_path = cache_directory / (
+                source_instance_file.stem + f"_{'weighted' if weighted else 'unweighted'}.graph")
+
         if os.path.exists(dest_path):
             source_mtime = os.path.getmtime(source_instance_file)
             last_updated = os.path.getmtime(dest_path)
 
             if source_mtime <= last_updated:
-                return # we already have an up2date version of that file
+                return  # we already have an up2date version of that file
 
         logger.info(f"Updated graph file: {source_instance_file}.")
-        
+
         g = nx.read_gpickle(source_instance_file)
         graph = KaMIS.__prepare_graph(g, weighted=weighted)
-        
+
         with open(dest_path, "w") as res_file:
             res_file.write(graph)
 
@@ -88,7 +88,8 @@ class KaMIS(MWISSolver):
         # for graph_path in solve_data_path.rglob("*.gpickle"):
 
         import functools
-        # def solve_graph(graph_path, weighted, directory, cache_directory, results_path, parameters):
+        # def solve_graph(graph_path, weighted, directory, cache_directory, results_path,
+        # parameters):
         argumented_solve_graph = functools.partial(
             solve_graph,
             weighted=weighted,
@@ -97,7 +98,8 @@ class KaMIS(MWISSolver):
             results_path=results_path,
             parameters=parameters)
 
-        res_list = imap_unordered_bar(argumented_solve_graph, solve_data_path.rglob("*.gpickle"), n_processes=64)
+        res_list = imap_unordered_bar(argumented_solve_graph, solve_data_path.rglob("*.gpickle"),
+                                      n_processes=64)
 
         results = {}
         for res in res_list:
@@ -132,9 +134,11 @@ def solve_graph(graph_path, weighted, directory, cache_directory, results_path, 
     else:
         executable = directory / "KaMIS" / "deploy" / "redumis"
 
-    _preprocessed_graph = cache_directory / (graph_path.stem + f"_{'weighted' if weighted else 'unweighted'}.graph")
+    _preprocessed_graph = cache_directory / (
+            graph_path.stem + f"_{'weighted' if weighted else 'unweighted'}.graph")
 
-    results_filename = results_path / (graph_path.stem + f"_{'weighted' if weighted else 'unweighted'}.result")
+    results_filename = results_path / (
+            graph_path.stem + f"_{'weighted' if weighted else 'unweighted'}.result")
 
     pass_kamis = False
     if os.path.exists(results_filename):
@@ -155,7 +159,8 @@ def solve_graph(graph_path, weighted, directory, cache_directory, results_path, 
 
         logger.debug(f"Calling {executable} with arguments {arguments}.")
         start_time = time.monotonic()
-        # out = subprocess.run(executable=executable, args=arguments, capture_output=True, text=True)
+        # out = subprocess.run(executable=executable, args=arguments, capture_output=True,
+        # text=True)
         # stdout = out.stdout
         _, lines = run_command_with_live_output([executable] + arguments, capture_output=True)
         solve_time = time.monotonic() - start_time
@@ -214,7 +219,8 @@ def solve_graph(graph_path, weighted, directory, cache_directory, results_path, 
 
             if not time_found_in_stdout:
                 # try another regex
-                discovery = re.compile("Best\n={42}\nSize:\s+\d+\nTime found:\s+(\d+\.\d*)", re.MULTILINE)
+                discovery = re.compile("Best\n={42}\nSize:\s+\d+\nTime found:\s+(\d+\.\d*)",
+                                       re.MULTILINE)
                 m = discovery.search(stdout)
                 if m:
                     solution_time = float(m.group(1))

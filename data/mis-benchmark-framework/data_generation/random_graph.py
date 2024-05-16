@@ -1,14 +1,16 @@
-from data_generation.generator import DataGenerator
-import networkx as nx
-import random
+import os
 import pickle
+import random
+import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
-import subprocess
-import os
-from logzero import logger
+
+import networkx as nx
 import tqdm
+from data_generation.generator import DataGenerator
+from logzero import logger
 from utils import run_command_with_live_output
+
 
 class GraphSampler(ABC):
     @abstractmethod
@@ -89,7 +91,7 @@ class HyperbolicRandomGraph(GraphSampler):
             girgs_repo = "https://github.com/chistopher/girgs"
             target_commit = "c38e4118f02cffae51b1eaf7a1c1f9314a6a89c8"
             subprocess.run(["git", "clone", girgs_repo], cwd=Path(__file__).parent)
-            subprocess.run(["git","checkout", target_commit], cwd=girgs_path)
+            subprocess.run(["git", "checkout", target_commit], cwd=girgs_path)
             os.mkdir(girgs_path / "build")
             subprocess.run(["cmake", ".."], cwd=girgs_path / "build")
             subprocess.run(["make", "genhrg"], cwd=girgs_path / "build")
@@ -102,7 +104,9 @@ class HyperbolicRandomGraph(GraphSampler):
 
     def generate_graph(self):
         n = random.randint(self.min_n, self.max_n)
-        command = [self.binary_path, "-n", str(n), "-alpha", str(self.alpha), "-t", str(self.t), "-deg", str(self.degree), "-threads", str(self.threads), "-edge", "1", "-file", str(self.tmp_path / "tmp")]
+        command = [self.binary_path, "-n", str(n), "-alpha", str(self.alpha), "-t", str(self.t),
+                   "-deg", str(self.degree), "-threads", str(self.threads), "-edge", "1", "-file",
+                   str(self.tmp_path / "tmp")]
         run_command_with_live_output(command)
 
         with open(self.tmp_path / "tmp.txt", 'r') as file:
@@ -117,29 +121,36 @@ class HyperbolicRandomGraph(GraphSampler):
 
         return G
 
+
 class RandomGraphGenerator(DataGenerator):
-    def __init__(self, output_path, graph_sampler: GraphSampler, num_graphs = 1):
+    def __init__(self, output_path, graph_sampler: GraphSampler, num_graphs=1):
         self.num_graphs = num_graphs
         self.output_path = output_path
         self.graph_sampler = graph_sampler
 
-    def generate(self, gen_labels = False, weighted = False):
+    def generate(self, gen_labels=False, weighted=False):
         for i in tqdm.tqdm(range(self.num_graphs)):
             stub = f"{self.graph_sampler}_{i}"
             G = self.graph_sampler.generate_graph()
 
             if weighted:
-                weight_mapping = { vertex: int(weight) for vertex, weight in zip(G.nodes, self.random_weight(G.number_of_nodes(), sigma=30, mu=100)) }
-                nx.set_node_attributes(G, values = weight_mapping, name='weight')
+                weight_mapping = {vertex: int(weight) for vertex, weight in zip(G.nodes,
+                                                                                self.random_weight(
+                                                                                    G.number_of_nodes(),
+                                                                                    sigma=30,
+                                                                                    mu=100))}
+                nx.set_node_attributes(G, values=weight_mapping, name='weight')
 
             if gen_labels:
                 mis, status = self._call_gurobi_solver(G, weighted=weighted)
-                label_mapping = { vertex: int(vertex in mis) for vertex in G.nodes }
-                nx.set_node_attributes(G, values = label_mapping, name='label' if status == "Optimal" else 'nonoptimal_label')
+                label_mapping = {vertex: int(vertex in mis) for vertex in G.nodes}
+                nx.set_node_attributes(G, values=label_mapping,
+                                       name='label' if status == "Optimal" else 'nonoptimal_label')
 
                 if status != "Optimal":
                     logger.warn(f"Graph {i} has non-optimal labels (mis size = {len(mis)})!")
 
-            output_file = self.output_path / (f"{stub}{'.non-optimal' if gen_labels and status != 'Optimal' else ''}.gpickle")
+            output_file = self.output_path / (
+                f"{stub}{'.non-optimal' if gen_labels and status != 'Optimal' else ''}.gpickle")
             with open(output_file, "wb") as f:
                 pickle.dump(G, f, pickle.HIGHEST_PROTOCOL)

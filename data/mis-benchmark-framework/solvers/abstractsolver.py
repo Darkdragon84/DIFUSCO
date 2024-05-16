@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod, abstractstaticmethod
-import pathlib
 import functools
+import pathlib
+from abc import ABC, abstractmethod, abstractstaticmethod
+
 
 class MWISSolver(ABC):
 
@@ -21,11 +22,13 @@ class MWISSolver(ABC):
         pass
 
     @classmethod
-    def _prepare_instances(C, instance_directory: pathlib.Path, cache_directory: pathlib.Path, **kwargs):
+    def _prepare_instances(C, instance_directory: pathlib.Path, cache_directory: pathlib.Path,
+                           **kwargs):
         # for graph_path in instance_directory.rglob("*.gpickle"):
         #     C._prepare_instance(graph_path.resolve(), cache_directory, **kwargs)
 
-        resolved_graph_paths = [graph_path.resolve() for graph_path in instance_directory.rglob("*.gpickle")]
+        resolved_graph_paths = [graph_path.resolve() for graph_path in
+                                instance_directory.rglob("*.gpickle")]
 
         prepare_instance = functools.partial(
             C._prepare_instance,
@@ -38,14 +41,16 @@ class MWISSolver(ABC):
 
     @abstractmethod
     def train(self, train_data_path: pathlib.Path, results_path: pathlib.Path, parameters):
-	    pass
+        pass
 
     @abstractmethod
     def solve(self, solve_data_path: pathlib.Path, results_path: pathlib.Path, parameters):
-	    pass
+        pass
+
 
 from multiprocessing import Pool
 from tqdm import tqdm
+
 
 def imap_unordered_bar(func, args, n_processes=2):
     p = Pool(n_processes)
