@@ -5,15 +5,18 @@ from argparse import ArgumentParser
 
 import torch
 import wandb
+
+os.environ["WANDB_MODE"] = "offline"
+wandb.init()
+
+from pl_mis_model import MISModel
+from pl_tsp_model import TSPModel
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.strategies.ddp import DDPStrategy
 from pytorch_lightning.utilities import rank_zero_info
-
-from pl_mis_model import MISModel
-from pl_tsp_model import TSPModel
 
 
 def arg_parser():

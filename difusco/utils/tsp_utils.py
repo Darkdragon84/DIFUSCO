@@ -5,8 +5,8 @@ import numpy as np
 import scipy.sparse
 import scipy.spatial
 import torch
-from utils.cython_merge.cython_merge import merge_cython
 
+from difusco.utils.cython_merge.cython_merge import merge_cython
 
 def batched_two_opt_torch(points, tour, max_iterations=1000, device="cpu"):
     iterator = 0

@@ -237,9 +237,7 @@ class RealWorldGraphGenerator(DataGenerator):
                     f"Saved PubMed. nodes={G.number_of_nodes()}, edges={G.number_of_edges()}")
 
         if self.create_if_needed("dblp"):
-            with (GraphDataset(
-                    "https://snap.stanford.edu/data/bigdata/communities/com-dblp.ungraph.txt.gz")
-            as dsdir):
+            with GraphDataset("https://snap.stanford.edu/data/bigdata/communities/com-dblp.ungraph.txt.gz") as dsdir:
                 df = pd.read_csv(dsdir / "com-dblp.ungraph.txt", header=None,
                                  names=["source", "target"], sep="\t", skiprows=4)
                 G = clean_nx_graph(nx.from_pandas_edgelist(df))
@@ -373,8 +371,8 @@ class RealWorldGraphGenerator(DataGenerator):
                 logger.info(
                     "Cannot load roadnet-berlin dataset without osmnx and dgl available! Skipping.")
             else:
-                import osmnx as ox
                 import dgl
+                import osmnx as ox
                 ox.config(use_cache=True, log_console=True)
                 G = ox.graph_from_bbox(52.6989, 52.1912, 14.1930, 12.7208, network_type="drive")
                 G = dgl.from_networkx(

@@ -1,2 +1,8 @@
 scripts
 .idea
+user_data
+__pycache__
+build
+*.c
+*.so
+*.egg-info

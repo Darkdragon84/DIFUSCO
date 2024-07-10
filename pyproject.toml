@@ -24,6 +24,9 @@ dev = [
     "black[d]"
 ]
 
+[tool.setuptools]
+packages = ["difusco"]
+
 [tool.black]
 line-length = 100
 target-version = ["py37"]
